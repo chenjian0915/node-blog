@@ -1,0 +1,14 @@
+.h1-title{
+    margin-left: 200px;
+}
+.nav-list{
+    width:150px;
+    margin-right:50px;
+}
+.nav-list a{
+    width:120px;
+    margin-bottom: 10px;
+}
+.content{
+    width:900px;
+}
