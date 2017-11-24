@@ -1,10 +1,15 @@
 var express = require('express');
 var path = require('path');
+var connect = require('connect');
+var session = require('express-session');
+var MongoStore = require('connect-mongo')(session); //express4.x移除了connect中间件
+var Settings = require('./settings');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var routers = require('./routes');
+var flash = require('connect-flash');
 
 var index = require('./routes/index');
 
@@ -21,7 +26,22 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(session({
+  secret : Settings.cookieSecret,
+  key : Settings.db,
+  cookie : {maxAge:1000*60*60*24*30},
+  store : new MongoStore({
+    //db : Settings.db
+    url:'mongodb://localhost/' + Settings.db,   //express4.x写法
+    //autoRemove:'native'
+  })
+}));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(flash());
+
+
+
+
 
 routers(app);
 
