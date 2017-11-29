@@ -1,0 +1,20 @@
+<%- include header %>
+<div>
+    <% if(user&&(user.name==post.name)){ %>
+        <a class="mar-right-10" target="_self" href="/edit/<%- post.name%>/<%- post.time.day%>/<%- post.title%>">编辑</a>
+    <% }else{ %>
+        <a target="_self" href="/remove/<%- post.name%>/<%- post.time.day%>/<%- post.title%>">删除</a>
+    <% } %>
+
+</div>
+<p>
+    作者:<%- post.name %> 日期:<%- post.time.minute %>
+</p>
+<div>
+    <%- post.post %>
+</div>
+
+
+<%- include comment %>
+
+<%- include footer %>

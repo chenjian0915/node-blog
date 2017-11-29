@@ -1,0 +1,45 @@
+<br>
+<%- JSON.stringify(post)%>
+<% post.comments.forEach(function(comment,index){ %>
+    <p>
+        <a href="<%- comment.website %><%- comment.name %>"></a>
+        <span class="info">回复于 <%- comment.time %></span>
+    </p>
+    <p>
+        <%- comment.content %>
+    </p>
+<% }) %>
+    <form method="post">
+         <% if(user){%>
+            <div class="form-group">
+                <label for="exampleInputPassword1">姓名</label>
+                <input type="text" class="form-control" name="name" placeholder="" value="<%- user.name %>" disabled="disabled">
+            </div>
+            <div class="form-group">
+                <label for="exampleInputPassword1">邮箱</label>
+                <input type="text" class="form-control" name="email" placeholder="" value="<%- user.email %>" disabled="disabled">
+            </div>
+             <div class="form-group">
+                <label for="exampleInputPassword1">网址</label>
+                <input type="text" class="form-control" name="website" placeholder="" value="/u/<%- user.name %>" disabled="disabled">
+            </div>
+        <%}else{%>
+            <div class="form-group">
+                <label for="exampleInputPassword1">姓名</label>
+                <input type="text" class="form-control" name="name" placeholder="" disabled="disabled">
+            </div>
+            <div class="form-group">
+                <label for="exampleInputPassword1">邮箱</label>
+                <input type="text" class="form-control" name="email" placeholder="" disabled="disabled">
+            </div>
+            <div class="form-group">
+                <label for="exampleInputPassword1">网址</label>
+                <input type="text" class="form-control" name="website" value="/" placeholder="" disabled="disabled">
+            </div>
+        <%}%>
+        <div class="form-group">
+            <label for="exampleInputPassword1">Email</label>
+            <textarea  class="form-control" name="post" placeholder="input content" cols="150" rows="10"></textarea>
+        </div>
+        <input type="submit" class="btn btn-default" value="Submit">
+    </form>

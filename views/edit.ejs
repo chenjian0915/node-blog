@@ -1,0 +1,14 @@
+<%- include header %>
+<form method="post">
+    <div class="form-group">
+        <label for="exampleInputPassword1">标题</label>
+        <input type="text" class="form-control" name="title" placeholder="input title" disabled="disabled" value="<%- post.title %>">
+    </div>
+    <div class="form-group">
+        <label for="exampleInputPassword1">Email</label>
+        <textarea  class="form-control" name="post" placeholder="input content" cols="150" rows="50"><%- post.post %></textarea>
+    </div>
+    <input type="submit" class="btn btn-default" value="Submit">
+</form>
+
+<%- include footer %>

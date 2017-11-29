@@ -33,9 +33,10 @@ User.prototype.save = function(callback){
             },function(err,user){
                 mongodb.close();
                 if(err){
-                    return callback(user);
+                    return callback(err);
                 }
-                callback(null,user[0]);
+                callback(null,user.ops[0]);
+                //callback(null,user[0]);  express3
             })
         });
     });
@@ -50,7 +51,7 @@ User.get = function(name,callback){
             return callback(err);
         }
         //读取users集合
-        db.collection('users',function(err,callback){
+        db.collection('users',function(err,collection){
             if(err){
                mongodb.close();
                return callback(err);

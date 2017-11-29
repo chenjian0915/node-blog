@@ -1,0 +1,1 @@
+express+mongodb开发报错 server instance in invalid state undefined   当前一个接口使用数据库没有关闭导致

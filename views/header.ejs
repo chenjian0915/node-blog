@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title><%- title %></title>
     <link rel="stylesheet" href="/stylesheets/bootstrap.min.css">
     <link rel="stylesheet" href="/stylesheets/style.css">
 </head>
@@ -10,15 +10,26 @@
 
 <header class="container">
     <h1 class="h1-title">
-        <%= title %>
+        <%- title %>
     </h1>
 </header>
 <div class="container">
     <nav class="pull-left nav-list">
         <a href="/" target="_self" class="btn btn-primary">home</a>
-        <a href="/login" target="_self" class="btn btn-default">login</a>
-        <a href="/reg" target="_self" class="btn btn-default">register</a>
+
+        <% if(user){ %>
+            <a href="/post" target="_self" class="btn btn-default">post</a>
+            <a href="/logout" target="_self" class="btn btn-default">logout</a>
+        <% }else{ %>
+            <a href="/login" target="_self" class="btn btn-default">login</a>
+            <a href="/reg" target="_self" class="btn btn-default">register</a>
+        <% } %>
     </nav>
     <article class="pull-left content">
-
+        <% if(success){ %>
+            <div><%- success %></div>
+        <% } %>
+        <% if(error){ %>
+            <div><%- error %></div>
+        <% } %>
 
