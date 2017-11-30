@@ -54,13 +54,11 @@ module.exports = function(app){
     });
     //检查用户是否已经存在
     User.get(newUser.name,function(err,user){
-      console.log(user)
       if(user){
         req.flash('error','用户已经存在!');
         return res.redirect('/reg');//返回注册页面
       }
       newUser.save(function(err,user){
-        console.log(err)
         if(err){
           req.flash('err',err);
           return res.redirect('/reg');
@@ -219,7 +217,7 @@ module.exports = function(app){
     var date = new Date();
     var time = date.getFullYear() + '-' + (date.getMonth()+1) + '-' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes();
     var comment = {
-      name : req.body.name,
+      name : req.params.name,
       email : req.body.email,
       website : req.body.website,
       time : time,

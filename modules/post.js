@@ -137,7 +137,6 @@ Post.update = function(name,day,title,post,callback){
         if(err){
             return callback(err);
         }
-        console.log(post)
         db.collection('posts', function (err,collection) {
             if(err){
                 mongodb.close();
