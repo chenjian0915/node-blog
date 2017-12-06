@@ -2,7 +2,12 @@
 <% posts.forEach(function(post,index){ %>
 <h2><a href="/u/<%- post.name %>/<%- post.time.day %>/<%- post.title %>"><%- post.title %></a></h2>
 <p>
-    作者:<%- post.name %> 日期:<%- post.time.minute %>
+    作者:<%- post.name %> 日期:<%- post.time.minute %> | 标签:
+    <% post.tags.forEach(function(tag,index){ %>
+        <% if(tag){ %>
+            <a href="/tag/<%- tag %>"><%- tag %></a>
+        <% } %>
+    <% }) %>
 </p>
 <div>
     <%- post.post %>

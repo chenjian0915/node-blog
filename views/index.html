@@ -3,23 +3,2461 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
-    <link rel="stylesheet" href="/stylesheets/bootstrap.min.css">
-    <link rel="stylesheet" href="/stylesheets/style.css">
+    <style>
+        body,html{
+            margin:0;
+            height: 100%;
+        }
+        .content{
+            min-height:100%;
+            margin-bottom: -50px;
+        }
+        .footer,.push{
+            height: 50px;
+            background:#f00;
+        }
+    </style>
 </head>
 <body>
 
-    <header class="container">
-        <h1>
-            <%= title %>
-        </h1>
-    </header>
-    <nav>
-        <a href="/" target="_self" class="btn btn-primary">home</a>
-        <a href="/home" target="_self" class="btn btn-default">login</a>
-        <a href="/reg" target="_self" class="btn btn-default">register</a>
-    </nav>
-    <article>
-
-    </article>
+    <div class="content">
+        content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>content<br>
+        111111<br>111111<br>111111<br>111111<br>222<br>
+        <div class="push"></div>
+    </div>
+    <div class="footer">1111111111111111111111111111111111111111</div>
 </body>
 </html>
+
+//接口路由对象
+var learnUrlObj = {
+sectionList : 'course/'+cid+'/sections' ,
+noteList : 'course/'+cid+'/notes',
+subtitleReport : 'subtitle/report',
+learnRecord : 'learn/record',
+note : 'note'
+};
+//toolObj
+
+/********** 视频回调 **********/
+
+window.on_cc_player_init = function (vid, objectId) {
+var config = {};
+config.on_player_seek = 'on_player_seek';
+config.on_player_fullscreen = 'on_player_fullscreen';
+
+config.rightmenu_enable = 0;
+// config.player_plugins = {
+//     Subtitle : {
+//         url : "http://mooc.pixseed.com" + subtitle_url,
+//         size : 30,
+//         color : 0xFFFFFF,
+//         surroundColor : 0x444444,
+//         bottom : 0.05,
+//         font : "微软雅黑",
+//     }
+// };
+
+var playSwf = Player.swf(objectId);
+playSwf.setConfig(config);
+Player.setPlayer(playSwf);
+
+};
+
+window.on_spark_player_ready = function () {
+//Practice.init();
+};
+
+// window.on_spark_player_start = function () {
+//     if(parseInt(oVideoTime)>0){
+//         Player.seek(oVideoTime);
+//     }
+//     if(progress_bar==0){
+//         Player.controlPause(Player.getPosition())
+//     }
+//
+// };
+function on_spark_player_start() {
+if(parseInt(oVideoTime)>0){
+Player.seek(oVideoTime);
+}
+if(progress_bar==0){
+Player.controlPause(Player.getPosition())
+}
+setTimeout(function () {
+$.ajax({
+url : urlHttp + learnUrlObj.learnRecord,
+data : {
+course_id : cid,
+section_id : sid ,
+max_play_point : parseInt(Player.getPosition())
+},
+type : 'post',
+success : function (response) {}
+});
+},1000);
+
+};
+
+window.on_spark_player_resume = function () {
+resumeFn();
+Player.controlPause()
+
+};
+
+// window.on_spark_player_stop =
+function on_spark_player_stop() {
+// Section.finish();
+$.ajax({
+url : urlHttp + learnUrlObj.learnRecord,
+data : {
+course_id : cid,
+section_id : sid ,
+max_play_point : parseInt(Player.getPosition())
+},
+type : 'post',
+success : function (response) {}
+});
+$.ajax({
+url : '/section/'+sid+'/next',
+type : 'get',
+success : function (response) {
+if(response.status === 200){
+if(response.data){
+location.href=response.data;
+}
+}
+}
+});
+
+};
+
+window.on_cc_player_pluginready = function (name) {
+//
+};
+
+window.get_cc_verification_code = function (vid) {
+return uname;
+};
+
+window.on_player_seek = function (from,to) {
+$.ajax({
+url : urlHttp + learnUrlObj.learnRecord,
+data : {
+course_id : cid,
+section_id : sid ,
+max_play_point : parseInt(to)
+},
+type : 'post',
+success : function (response) {}
+});
+};
+
+window.on_player_fullscreen = function (flag) {
+
+if(flag==0){
+setTimeout(function () {
+$(window).trigger('resize');
+},300);
+
+}else{
+
+}
+};
+
+window.Pixseed = {
+tools : {
+timeStyleCn : function (time){
+var time = Math.floor(time);
+var minute = '';
+var second = '';
+minute = Math.floor(time/60)>9 ? Math.floor(time/60) : '0' + Math.floor(time/60) ;
+second =   time % 60 > 9 ? time % 60 : '0' + (time % 60);
+
+return minute + '分' + second + '秒';
+},
+timeStyleNum : function (time){
+var time = parseInt(time);
+var minute = '';
+var second = '';
+minute = Math.floor(time/60)>9 ? Math.floor(time/60) : '0' + Math.floor(time/60) ;
+second =   time % 60 > 9 ? time % 60 : '0' + (time % 60);
+return minute + ':' + second ;
+},
+formatTime : function (time) {
+return parseInt(time / 60 % 60) + '分' + parseInt(time % 60) + '秒';
+}
+
+}
+};
+
+
+// 播放相关
+var Player = (function () {
+
+"use strict";
+
+var timer = null;
+var player = null;
+
+var getSWF = function (objectId) {
+if (window.document[objectId]) {
+return window.document[objectId];
+} else if (navigator.appName.indexOf("Microsoft") == -1) {
+if (document.embeds && document.embeds[objectId]) {
+return document.embeds[objectId];
+}
+} else {
+return document.getElementById(objectId);
+}
+};
+
+var setTime = function (time) {
+objVideoContainer.data('time', time);
+
+$('.player-time').html('时间：' + formatTime(time));
+};
+
+var setPlayer = function (playSwf) {
+player = playSwf;
+Player.player = playSwf;
+};
+
+var getPosition = function () {
+return player.getPosition();
+};
+
+var getDuration = function () {
+return player.getDuration();
+};
+
+var setTimer = function () {
+// timer = setInterval(worker, 1000);
+};
+
+var clearTimer = function () {
+clearInterval(timer);
+};
+
+var resume = function () {
+player.resume();
+setTimer();
+};
+
+var pause = function () {
+player.pause();
+clearTimer();
+};
+var seek = function (time) {
+player.seek(Number(time));
+};
+
+var worker = function () {
+var position = parseInt(player.getPosition());
+setTime(position);
+// 学习记录
+if (position && (position % 10 === 0)) {
+$.post('/course/study-record', {course_id: cid, structure_id: sid, ended_at: position});
+}
+};
+
+
+// 笔记暂停
+$('#new-note').on('focus', function () {
+pause();
+$('.note-time').show().html('时间：' + window.Pixseed.tools.formatTime(getPosition()));
+});
+//发布笔记
+$('.btn-new-note').on('click',function(){
+var notepost = {
+course_id : cid,
+section_id : sid,
+content : $('#new-note').val(),
+time_point : parseInt(getPosition())
+};
+// sensitiveword(sensitivestr)
+// var searchstr = $('#new-note').val();
+// if(sensitivesearch(searchstr) !== searchstr){
+//     sensitiveword(sensitivesearch(searchstr));
+//     return;
+// }
+if(!notepost.content){alert('内容不能为空');return;}
+Note.pulishNote(notepost);
+});
+
+
+
+$('.subtitle-error').on('click',function () {
+
+pause();
+
+function submitSubtitleFn(){
+$('.submit-subtitle').off('click');
+var subtitleObj = {
+'course_id'   : cid,
+'section_id' : sid,
+'time_point' : Math.floor(getPosition()),
+'content'    : $('.subtitle-description').val()
+};
+if(!subtitleObj.content){
+tooltipBox('请填写错误内容');
+return;
+}
+$.ajax({
+url : urlHttp + obj.subtitle,
+type : 'post',
+data : subtitleObj,
+success : function(response){
+subtitle_dialog.close().remove();
+tooltipBox('提交成功',function(){resume()});
+},
+error : function(){
+$('.submit-subtitle').on('click',submitSubtitleFn);
+}
+});
+}
+});
+
+
+return {
+swf: getSWF,
+setTimer: setTimer,
+clearTimer: clearTimer,
+seek : seek,
+pause : pause,
+setPlayer: setPlayer,
+resume   : resume,
+getPosition : getPosition,
+getDuration : getDuration,
+};
+
+})();
+
+
+var VideoPlayer = (function () {
+var oVideoTime = window.location.hash.substr(1).split('#')[0];
+var objVideoContainer = $('#video');
+var videoArea = $('.video-area');
+var objStudyToolBarLi = $('.study-tool-tab li');
+var nowWindowWidth = $(window).width();
+if(nowWindowWidth>768){
+//********** 视频区域宽高适应 **********
+//初始状态
+var intWindowWidth    = nowWindowWidth<=1200?1200:nowWindowWidth;
+var intWindowHeight   = $(window).height();
+var objSidebar        = $('aside.video-sidebar');
+
+// 最小宽高
+var intVideoMinWidth  = 785; // 视频最小宽度 1200 - 360
+var intVideoMinHeight = 540; // 视频最小高度
+
+// 视频区的宽等于窗口宽-右边栏宽-20px的留白
+var intVideoContainerW  = intWindowWidth - 360 - 50;
+
+// 视频区的高等于窗口高-头部header高-视频下方需要露出部分的高84px
+var intVideoContainerH = intWindowHeight - $('.video-header').height() - 104;
+
+if (intVideoContainerW < intVideoMinWidth )
+intVideoContainerW = intVideoMinWidth;  // 视频最小宽度保底
+objVideoContainer.css({ width: intVideoContainerW });
+
+if ( intVideoContainerH < intVideoMinHeight )
+intVideoContainerH = intVideoMinHeight; // 视频最小高度保底
+objVideoContainer.css({ height: intVideoContainerH });
+objSidebar.css({ height: intVideoContainerH });
+
+// header 区宽
+var objVideoHeader = $('header.video-header');
+if ( objVideoHeader.width() < 1200 ) {
+objVideoHeader.css({ width: 1200 });
+} else {
+objVideoHeader.css({ width: '' });
+}
+
+// 视频边栏笔记高度
+// 边栏总高 - 笔记标题区高度 - 记笔记区高度
+var intTitleBarH = 0;
+var intNewNoteH  = 170;
+// 视频边栏笔记高度标志
+var objNoteHeightMark    = $('.video-sidebar .note-height-mark');
+var intVideoSidebarNoteH = intVideoContainerH - intTitleBarH - intNewNoteH;
+objNoteHeightMark.css({ height: intVideoSidebarNoteH - 20 });
+
+// 视频边栏问答高度
+// 边栏总高 - 问答标题区高度 - 提问区高度
+var intNewQuestionH    = 170;
+// 视频边栏提问高度标志
+var objQaHeightMark    = $('.video-sidebar .qa-height-mark');
+var intVideoSidebarQaH = intVideoContainerH - intTitleBarH - intNewQuestionH;
+objQaHeightMark.css({ height: intVideoSidebarQaH -20 });
+$('.note-list').css({height:intVideoContainerH-intNewQuestionH-20});
+}else{
+console.log(nowWindowWidth)
+console.log(Math.ceil(nowWindowWidth/16)*9)
+if(nowWindowWidth<433){
+var num = 20;
+}else{
+var num = 50;
+}
+videoArea.css({ width: nowWindowWidth });
+objVideoContainer.css({ height: (Math.ceil(nowWindowWidth/16)*9+num) });
+$('.header-video-height').css({ height: Math.ceil(nowWindowWidth/16)*9+num + 60})
+}
+
+// 改变窗口大小
+$(window).on('resize', function(){
+var nowWindowWidth = $(window).width();
+objVideoContainer  = $('#video');
+objSidebar         = $('aside.video-sidebar');
+if(nowWindowWidth>768){
+intWindowWidth     = nowWindowWidth<=1200?1200:nowWindowWidth;
+if(intWindowWidth>=1200){
+$('.video-area').css({width:'100%'});
+}
+intWindowHeight    = $(window).height();
+intVideoContainerH = intWindowHeight - 60 - 104;
+if(objSidebar.css('right')==='0px'){
+intVideoContainerW = intWindowWidth - 360 - 50;
+}else{
+intVideoContainerW = intWindowWidth;
+}
+if ( intVideoContainerW < intVideoMinWidth )
+intVideoContainerW = intVideoMinWidth;
+
+objVideoContainer.css({ width: intVideoContainerW });
+
+if ( intVideoContainerH < intVideoMinHeight )
+intVideoContainerH = intVideoMinHeight;
+
+objVideoContainer.css({ height: intVideoContainerH });
+
+objSidebar.css({ height: intVideoContainerH });
+if ( intWindowWidth <= 1200 ) {
+objVideoHeader.css({ width: 1200 });
+} else {
+objVideoHeader.css({ width: '' });
+}
+
+// 视频边栏笔记高度
+var intVideoSidebarNoteH = intVideoContainerH - intTitleBarH - intNewNoteH;
+objNoteHeightMark.css({ height: intVideoSidebarNoteH });
+
+// 视频边栏问答高度
+var intVideoSidebarQaH = intVideoContainerH - intTitleBarH - intNewQuestionH;
+objQaHeightMark.css({ height: intVideoSidebarQaH });
+$('.note-list').css({height:intVideoContainerH-intNewQuestionH-20});
+}else{
+if(nowWindowWidth<433){
+var num = 20;
+}else{
+var num = 50;
+}
+videoArea.css({ width: nowWindowWidth });
+objVideoContainer.css({ height: Math.ceil(nowWindowWidth/16)*9+num });
+$('.header-video-height').css({ height: Math.ceil(nowWindowWidth/16)*9+num + 60});
+}
+});
+
+objStudyToolBarLi.on('click', function () {
+// 是否展开过
+var isSwitchOn = $(this).parent().hasClass('on');
+var intIndex   = 0;
+
+if ( $(this).is('.switcher') ) {
+// 点展开收起时
+if ( isSwitchOn ) {
+// 展开状态时，触发收起，同时带有 active 类的 tab 上加 off 类
+objSidebar.css({ right: -360 });
+objVideoContainer.css({ width: '100%' });
+$(this).addClass('active').siblings('li.active').addClass('off')
+.parent().removeClass('on').addClass('off');
+intVideoContainerW = intWindowWidth;
+} else {
+// 收起状态时，触发展开，同时去掉 tab 上加的 off 类
+objSidebar.css({ right: 0 });
+objVideoContainer.css({ width: intVideoContainerW -360 -50 });
+$(this).removeClass('active').siblings('li.active').removeClass('off').parent().removeClass('off').addClass('on');
+}
+
+} else {
+// 点展开收起外的 tab 时
+if ( isSwitchOn ) {
+// 如果是展开状态切换
+if ( $(this).hasClass('active') )
+return;
+intIndex = $(this).index();
+$(this).addClass('active')
+.siblings().removeClass('active')
+.end()
+.parent().siblings('.study-tool-content').removeClass('active')
+.eq(intIndex).addClass('active');
+} else {
+// 如果是收起状态切换
+if ( $(this).hasClass('active') ) {
+// 收起状态，点的是不是事先 active 的那个 tab
+$(this).removeClass('off');
+objSidebar.css({ right: 0 });
+objVideoContainer.css({ width: intVideoContainerW });
+$(this).siblings('.switcher').removeClass('active').parent().removeClass('off').addClass('on');
+} else {
+intIndex = $(this).index();
+$(this).addClass("active").siblings().removeClass('active').removeClass('off') // 清理已 active的
+.siblings('.switcher').removeClass('active').parent().removeClass('off').addClass('on')
+.siblings('.study-tool-content').removeClass('active')
+.eq(intIndex).addClass('active')
+;
+// 展开
+objSidebar.css({ right: 0 });
+objVideoContainer.css({ width: intVideoContainerW });
+}
+}
+}
+});
+return {
+intVideoSidebarNoteH : intVideoSidebarNoteH
+}
+})();
+
+// 右侧 ToolBar
+_.templateSettings = {
+evaluate    : /<%([\s\S]+?)%>/g,
+interpolate : /<%%([\s\S]+?)%>/g,
+escape      : /<%-([\s\S]+?)%>/g
+};
+
+
+var Section = (function () {
+
+function getSection(){
+$.ajax({
+url : urlHttp + learnUrlObj.sectionList,
+type : 'get',
+success : function (response) {
+var sectionObj = {};
+for(var i in response){
+if(response[i].sections){
+sectionObj.courseType = 1;
+}else{
+sectionObj.courseType = 0;
+}
+}
+sectionObj.timeStyleNum = window.Pixseed.tools.timeStyleNum;
+sectionObj.data = response;
+sectionObj.sid = sid;
+sectionObj.isVip = isVip;
+var html = _.template($('#section-list').html(), {variable: 'data'})(sectionObj);
+$('.section-list').html(html );
+$('.bottom-section-list').html(html);
+}
+})
+}
+getSection();
+
+$(".course-structure .content").mCustomScrollbar();
+$(".note-selections .content").mCustomScrollbar();
+$(".data-selections .content").mCustomScrollbar();
+// $('.mCSB_container').css({'top':0});
+// var oTop = -parseInt($('.now-section').offset().top-250<0?0:$('.now-section').offset().top-250);
+// if($('.chapter').height()>$('.section-scroll-list').height()-40){
+//     $('.mCSB_container').css({'top':oTop + 'px'});
+// }
+return {
+getSection : getSection
+}
+})();
+
+var Note = (function () {
+function getNote(){
+$.ajax({
+url : urlHttp + learnUrlObj.noteList,
+type : 'get',
+success : function (response) {
+if(response.length===0){
+$('.note-item-box').html('<div class="no-course no-course-dark no-data-note" style="display:block;">暂无笔记</div>');
+return;
+}
+var data = {
+timeStyle : window.Pixseed.tools.timeStyleCn,
+data : response
+};
+$('.note-item-box').html(renderList(data));
+}
+})
+};
+getNote();
+
+
+function pulishNote(data){
+$.ajax({
+url : urlHttp + learnUrlObj.note ,
+data : data ,
+type : 'post' ,
+success : function (response) {
+$('.note-list .no-course').hide();
+$('#new-note').val('');
+response.section = {
+title : $('.little-title').html()
+};
+var noteArr = [];
+noteArr.push(response);
+var data = {
+timeStyle : window.Pixseed.tools.timeStyleCn,
+data : noteArr
+};
+
+$('.note-item-box').html(renderList(data)+$('.note-item-box').html());
+},
+error : function (error) {
+modal_tip({text:'发布失败'});
+}
+})
+}
+
+function renderList(data){
+var html = _.template($('#right-note-list').html(),{variable:'note'})(data);
+return html;
+}
+$('.note-list').on('click','.seemore',function () {
+$(this).hide().siblings('.hidetext').hide().siblings('.hidemore,.moretext').show();
+});
+$('.note-list').on('click','.hidemore',function () {
+$(this).hide().siblings('.moretext').hide().siblings('.seemore,.hidetext').show();
+});
+return {
+pulishNote : pulishNote
+}
+
+})();
+var UserDown = (function () {
+return;
+$('#user_down').on('mouseover',downlist_show);
+$('#user_down').on('mouseout',downlist_hide);
+function messageList(){
+if($('.send-message').hasClass('active')){return;}
+return;
+// $.ajax({
+//     url : urlHttp + obj.unread,
+//     type : 'get',
+//     success : function(response){
+//         if(parseInt(response)>0){
+//             $('.message-count').html(response).show().css('display','inline-block');
+//             $('.avatar-top-msg').html('');
+//
+//         }
+//     }
+// });
+}
+messageList();
+// if(!messagePage){messageList()}
+var unReadStatus = true;
+var historyStatus = true;
+function downlist_show(){
+$('#downlist').show();
+}
+
+function downlist_hide(){
+$('#downlist').hide();
+}
+})();
+
+
+var TabSection = (function () {
+$('.prev-section').on('click',function () {
+$.ajax({
+url : '/section/'+sid+'/prev',
+type : 'get',
+success : function (response) {
+if(response.status === 200){
+if(response.data){
+location.href=response.data;
+}else{
+modal_tip({text:'已经是第一章了!'})
+}
+}else if(response.status === 422){
+modal_tip({text:response.message});
+}
+}
+})
+})
+$('.next-section').on('click',function () {
+$.ajax({
+url : '/section/'+sid+'/next',
+type : 'get',
+success : function (response) {
+if(response.status === 200){
+if(response.data){
+location.href=response.data;
+}else{
+modal_tip({text:'已经是最后一章了!'})
+}
+}else if(response.status === 422){
+modal_tip({text:response.message});
+}
+}
+})
+})
+
+//字幕纠错
+$('#send_error').on('show.bs.modal',function () {
+Player.pause();
+$('#send_error .video-time').html(window.Pixseed.tools.timeStyleNum(Player.getPosition()));
+});
+$('#send_error').on('hidden.bs.modal',function () {
+
+Player.resume();
+});
+$('.submit-error-word').on('click',function(){
+if(!$('.error-word-input').val()){
+modal_tip({text:'错误内容不能为空!'})
+}
+var data = {
+content : $('.error-word-input').val(),
+course_id : cid,
+section_id : sid,
+time_point : parseInt(Player.getPosition())
+};
+$.ajax({
+url : urlHttp + learnUrlObj.subtitleReport,
+type : 'post',
+data : data,
+success : function (response) {
+if(response.status === 200){
+modal_tip({text:'错误字幕信息提交成功!'})
+$('#send_error').modal('hide');
+}else if(response.status===200){
+modal_tip({text:response.message});
+}
+}
+})
+})
+})();
+
+var SendVideoPosition = (function () {
+var Timer = null;
+Timer = setInterval(function () {
+if(!isVip){return;}
+if(!Player.player){return;}
+// if(parseInt(Player.getPosition())>0){
+//     if($('.now-section').hasClass('disabled')&&!($('.now-section').hasClass('completed')||$('.now-section').hasClass('viewed'))){
+//         Section.getSection();
+//     }
+// }
+// if(parseInt(Player.getPosition())===parseInt(Player.getDuration())){
+//     if($('.now-section').hasClass('viewed')){
+//         Section.getSection();
+//     }
+// }
+if(parseInt(Player.getPosition())===0){return;}
+$.ajax({
+url : urlHttp + learnUrlObj.learnRecord,
+data : {
+course_id : cid,
+section_id : sid ,
+max_play_point : parseInt(Player.getPosition())
+},
+type : 'post',
+success : function (response) {}
+});
+},10000);
+setInterval(function () {
+if(!isVip){return;}
+if(!Player.player){return;}
+if(parseInt(Player.getPosition())>0){
+if($('.now-section').hasClass('disabled')&&!($('.now-section').hasClass('completed')||$('.now-section').hasClass('viewed'))){
+Section.getSection();
+}
+}
+if(parseInt(Player.getPosition())===parseInt(Player.getDuration())){
+if($('.now-section').hasClass('viewed')){
+Section.getSection();
+}
+}
+},2000)
+})();
+
+var JoinCourse = (function () {
+$('.add-study,.select-vip-btn').on('click',function () {
+if($(this).attr('data-course-now')=='0'){
+$('#full-modal').modal('show');
+}else if($(this).attr('data-can-choose')=='0'){
+$('#not-crow-modal').modal('show');
+}else{
+$('#ok-modal').modal();
+};
+
+});
+$('#ok-modal .success-btn').on('click',function () {
+$.ajax({
+url : '/course/'+cid+'/join',
+type : 'get',
+success : function (response) {
+// if(response.status === 200){
+//     $('#ok-modal').modal('hide');
+//     modal_tip({text:'参加课程成功!'})
+//     setTimeout(function () {
+//         window.location.reload();
+//     },1500);
+// }
+var code = response.message;
+
+if (code == 1) {
+$('#ok-modal').modal('hide');
+$('#not-crow-modal').modal('show');
+} else if (code == 2) {
+$('#ok-modal').modal('hide');
+$('#full-modal').modal('show');
+} else {
+$('#ok-modal').modal('hide');
+modal_tip({text:'参加课程成功!'});
+setTimeout(function () {
+window.location.reload();
+},1500);
+}
+}
+});
+});
+// $('.select-vip-btn').show().on('click',function () {
+//     $.ajax({
+//         url : '/course/'+cid+'/join',
+//         type : 'get',
+//         success : function (respoonse) {
+//             if(response.status === 200){
+//                 modal_tip({text:'参加课程成功!'})
+//                 setTimeout(function () {
+//                     window.location.reload();
+//                 },1000);
+//             }
+//         }
+//     });
+// })
+})();
+
+$(function () {
+//初始化tooltips
+$('[data-toggle="tooltip"]').tooltip()
+});
+
+
+
+
+
+
+
+header.video-header {
+color: #fff;
+height: 60px;
+line-height: 60px;
+background-color: #353636;
+// overflow: hidden;
+.little-title{margin-left:10px;font-size:14px;}
+// 视频标题
+.video-title {
+height: 60px;
+//width:800px;
+margin-left:20px;
+line-height: 60px;
+color: $color-white;
+
+h1{
+float:left;
+height: 60px;
+line-height: 60px;
+color: $color-white;
+
+small{color: $color-white;}
+
+}
+a {
+
+color: $text-btn-green;
+cursor: pointer;
+
+&:hover {
+text-decoration: none;
+}
+
+&.back {
+float: left;
+height: 60px;
+line-height: 60px;
+vertical-align: middle;
+padding-left: 15px;
+//height: 20px;
+//line-height: 20px;
+background: url(/assets/img/back-point.png) no-repeat left top;
+font-size:16px;
+
+&:hover {
+color: $text-btn-green-hover;
+background-position:left bottom;
+}
+}
+
+&.btn-share {
+position:relative;
+display: inline-block;
+vertical-align: middle;
+//color: $text-color-green-light;
+text-decoration: none;
+}
+
+&.prev-section{
+
+float:left;
+display:inline-block;
+margin:-6px 40px 0 26px;
+width:40px;
+height:60px;
+background:url(/assets/img/prev-section.png) no-repeat left top;
+&:hover{
+background-position: left bottom;
+}
+}
+}
+h1 {
+//float:left;
+//display: inline-block;
+font-size: 18px;
+font-weight: normal;
+margin: 0 20px 0 0;
+}
+
+
+}
+
+.nav-ul{
+margin-right:50px;
+height:60px;
+.user-avatar{
+border-radius: 50%;
+}
+li{
+//margin-top: 9px;
+float: left;
+list-style: none;
+border-bottom:6px solid #333435;
+a{
+display: inline-block;
+text-decoration: none;
+font-size: 16px;
+padding: 0 35px;
+color: #f2f4f9;
+&:hover{
+color: $btn-green;
+}
+}
+.my-study{
+height:54px;
+padding-left: 0;
+}
+&.active{
+a{
+font-size: 20px;
+position: relative;
+top: 0px;
+color: #58bfaa;
+}
+border-bottom:6px solid $btn-green;
+}
+}
+.mobile-nav-center{
+z-index: 9999;
+display: none;
+border:1px solid #656768;
+border-radius: 5px;
+text-align: center;
+position: absolute;
+top:68px;
+right:19px;
+background: #fdfefe;
+.border-black-t{
+position: absolute;
+right:29px;
+top:-52px;
+.border-black-b{
+top:2px;
+}
+}
+.out-btn{
+border-top: 1px solid $btn-green;
+}
+.nav-pc-drop{
+width:345px;
+height:209px;
+}
+
+}
+.nav-img-right{
+display: inline-block;
+margin-top: 2px;
+.user-avatar-a{
+position: relative;
+.red-span{
+display: none;
+position: absolute;
+width:8px;
+height:8px;
+background: #ff5c2d;
+border-radius: 50%;
+right:2px;
+top:-7px;
+}
+}
+}
+.nav-img-right-center{
+margin-right: -10px;
+}
+}
+.nav.avbar-inverse{position:relative;}
+.header-input{
+background: #333435;
+}
+.crown-btn{
+margin-right: 35px;
+img{margin-top:-6px;}
+}
+/*下拉pc*/
+.drop-center-top{
+background: #333435;
+text-align: left;
+line-height: 30px;
+padding: 7px 13px;
+.drop-center-top-name.active{
+color: #bea97a;
+}
+p{
+margin: 10px 0;
+}
+.btn-vip{
+display: inline-block;
+width:90px;
+height:30px;
+border:1px solid #bea97a;
+color: #bea97a;
+text-align: center;
+cursor: pointer;
+border-radius: 4px;
+}
+.btn-vip-keep{
+&:hover{
+border:1px solid #a08d63;
+color: #a08d63;
+}
+}
+.btn-vip-not{
+background: #bea97a;
+color: #403725;
+&:hover{
+background: #a08d63;
+border:1px solid #a08d63;
+}
+}
+.font-style{
+font-style: normal;
+}
+}
+.drop-center-bottom{
+line-height:normal;
+text-align:left;
+a{
+display: inline-block;
+line-height: normal;
+}
+dl{
+line-height: normal;
+display: inline-block;
+position: relative;
+width:56px;
+color: #bea97a;
+text-align: center;
+margin:0 13px;
+cursor: pointer;
+dt{
+width: 50px;
+margin: 18px auto 2px;
+height: 50px;
+}
+&:hover{
+color: #a08d63;
+dt{
+//border:1px solid #a08d63;
+}
+}
+.dingdan-num{
+display: none;
+width: 18px;
+height: 18px;
+font-size: 12px;
+color: #fff;
+background: #ff5c2d;
+border-radius: 50%;
+text-align: center;
+position: absolute;
+line-height: 18px;
+right: 1px;
+bottom: 55px;
+}
+.message-num{
+display:none;
+width:18px;
+height:18px;
+font-size: 12px;
+color: #fff;
+background: #ff5c2d;
+border-radius: 50%;
+position: absolute;
+line-height: 18px;
+right: 1px;
+bottom: 55px;
+}
+}
+.dl-last{
+margin-right: 0;
+
+}
+}
+.logOut-btn{
+border: none;
+background: none;
+color: #848788;
+margin-right: 16px;
+margin-bottom:10px;
+margin-top: 7px;
+cursor: pointer;
+outline: none;
+line-height: normal;
+&:hover{
+color: #58bfaa;
+}
+}
+.login-mobel{
+position: absolute;
+top:36px;
+color:#ffffff;
+display:inline-block;
+text-align:center;
+cursor:pointer;
+right:24px;
+span{
+font-size: 16px;
+&:hover{
+color: #eee;
+}
+}
+}
+.mobile-nav-logout{
+border: none;
+background: none;
+outline: none;
+text-align: center;
+font-size: 18px;
+width:165px;
+line-height: 31px;
+display: inline-block;
+text-decoration: none;
+color: #f2f4f9;
+padding: 10px 0 10px 10px;
+&:hover{
+color: $btn-green;
+}
+}
+
+.add-study{
+margin-right:77px;
+margin-top:12px;
+}
+}
+
+.video-area {
+position: relative;
+min-width: 1200px;
+min-height: 405px;
+color: #fff;
+background-color: #333;
+height: auto;
+overflow:hidden;
+.next-section{
+display:inline-block;
+margin:15px 20px 0 121px;
+width:40px;
+height:45px;
+padding-right:10px;
+background:url(/assets/img/next-section.png) no-repeat left top;
+&:hover{
+background-position: left bottom;
+}
+}
+}
+
+#video {
+min-height: 405px;
+position: relative;
+.subtitle-error{
+position:absolute;
+right:0;top:-45px;
+width:28px;
+height:28px;
+background:#313131;
+border:1px solid #959595;
+border-radius:4px;
+line-height:28px;
+text-align:center;
+font-size:20px;
+color:#959595;
+text-decoration:none;
+&.disabled{
+background:#aaa;
+}
+&:hover{
+border-color:#4ca194;
+color:#4ca194;
+}
+}
+#note-tips{
+position: absolute;
+right: 0;
+bottom: 0;
+}
+.btn-evaluate-box{
+position: absolute;
+top: 150px;
+left: 50%;
+width:200px;
+margin-left:-120px;
+background-color: #777;
+color: #fff;
+padding: 20px;
+display: none;
+font-size:16px;
+z-index: 1000000;
+}
+
+.video-back-black{
+position:absolute;
+display:none;
+width:100%;
+height:100%;
+background:#000;
+left:0;
+top:0;
+opacity: .5;
+z-index:100;
+}
+.try-listen-box{
+position:absolute;
+display:none;
+left:0;
+top:50%;
+width:100%;
+transform: translate(0,-50%);
+text-align:center;
+z-index:200;
+
+}
+.try-listen-title{
+margin-bottom:30px;
+font-size:30px;
+}
+.try-listen-course{
+margin-bottom:30px;
+}
+
+.buy-vip-modal,.select-vip-modal{
+position:absolute;
+left:0;top:0;
+width:100%;
+height:100%;
+background:#2d2d2e;
+}
+.buy-vip-box{
+position:absolute;
+width:700px;
+left:50%;
+top:50%;
+transform: translate(-50%,-50%);
+
+text-align:center;
+}
+@media \0screen\,screen\9 {
+.buy-vip-box{
+margin:-100px 0 0 -350px;
+&.buy-vip-modal-top{
+margin-top:-200px;
+}
+}
+}
+.buy-vip-title{
+font-size:28px;
+}
+.select-course-name{
+margin:35px 0;
+}
+.select-vip-btn{
+margin-right:25px;
+}
+.learn-buy-vip-btn{
+display: inline-block;
+margin:50px 0;
+width:300px;
+height:36px;
+background:url(/assets/img/learn-buy-vip-btn.png) no-repeat left top;
+&:hover{background:url(/assets/img/learn-buy-vip-btn-hover.png) no-repeat left top;}
+}
+.gnomon-content-title{
+color:#edd896;
+font-size:16px;
+text-align:left;
+}
+
+.gnomon-content-item{
+width:130px;
+margin-right:10px;
+color:#edd896;
+font-size:16px;
+text-align:center;
+}
+.gnomon-icon{
+margin:0 auto;
+margin-bottom: 20px;
+width:90px;height:90px;
+line-height:90px;
+text-align:center;
+}
+}
+
+.bottom-list-back{
+display:none;
+}
+
+
+// 视频右边栏
+aside.video-sidebar {
+position: absolute;
+width: 360px;
+min-height: 405px;
+right: 0;
+top: 0;
+background-color: #595b5c;
+
+
+.study-tool-tab {
+position: absolute;
+left: -40px;
+top: 50%;
+margin-top: -105px;
+width: 40px;
+list-style:none;
+
+li {
+position:relative;
+width: 40px;
+height: 42px;
+//line-height: 40px;
+text-align: center;
+color: #fff;
+margin-bottom: 4px;
+border-top-left-radius: 3px;
+border-bottom-left-radius: 3px;
+background-color:#a2a5a7;
+cursor: pointer;
+
+&.active,&:hover {
+background-color: #58bfaa;
+}
+
+&.off {
+background-color: #a2a5a7;
+}
+.bar-span{
+display:inline-block;
+width:40px;
+font-size:12px;
+}
+img{vertical-align: middle;}
+&.switcher{
+background-image:url(/assets/img/toggle-show-title.png);
+background-repeat:no-repeat;
+background-position: right center;
+&.active{background-position:left center;}
+}
+}
+}
+
+.study-tool-content {
+display: none;
+//color: $text-color;
+height: 97%;
+//overflow: hidden;
+
+&.active {
+display: block;
+
+}
+}
+}
+
+
+// 精选笔记
+// TODO 重构
+.note-selections {
+position: relative;
+padding-top:10px;
+.content-box {
+overflow: hidden;
+}
+
+.note-list {
+//overflow: hidden;
+
+overflow: auto;
+position: relative;
+padding: 0 0 20px 4px;
+margin: 10px;
+max-width: 95%;
+-webkit-box-sizing: border-box;
+-moz-box-sizing: border-box;
+box-sizing: border-box;
+//height:400px;
+.note-item-box{
+height:100%;
+}
+.note {
+margin:0 10px 5px 0;
+padding:10px 0 0 0;
+//color:$video-right-white;
+//word-wrap:break-word;
+font-size:14px;
+.moretext{
+//display:inline-block;
+//width:327px;
+display:none;
+}
+.seemore,.hidemore{
+margin-left:8px;
+color:#58bfaa;
+}
+.hidemore{
+display:none;
+}
+}
+.mini-bar {
+text-align: right;
+position: relative;
+
+.fav-tips-box {
+display: none;
+position: absolute;
+color: #7dcbbb;
+padding: 10px;
+text-align: center;
+top: -30px;
+right:0px;
+width:90px;
+height:10px;
+}
+a.btn-fav {
+display: inline-block;
+width: 120px;
+text-align: right;
+text-decoration: none;
+line-height: 16px;
+color: #888;
+&:hover{
+//color: $text-color-green;
+i{
+background-position: center bottom;
+}
+span{
+//color: $text-color-green;
+}
+}
+&.active {
+//color: $text-color-green;
+i{
+background-position: center bottom;
+}
+span{
+//color: $text-color-green;
+}
+}
+}
+}
+
+}
+
+.note-time-title,.note-section-title {
+display: inline-block;
+//margin: 0 5px 0 9px;
+margin-top:3px;
+padding: 3px 0;
+font-size: 14px;
+line-height: 1em;
+font-size:12px;
+//color: $text-color-common;
+}
+.note-section-title{
+width:200px;
+overflow:hidden;
+white-space:nowrap;
+text-overflow:ellipsis;
+}
+
+
+
+.write-note {
+//position: absolute;
+padding: 0 0 0 10px;
+width: 350px;
+height: 170px;
+bottom: 0;
+//background-color: $video-right-bgcolor;
+overflow: hidden;
+
+.more {
+text-align: right;
+padding: 5px 0;
+
+a {
+//color: $text-color-gray;
+
+&:hover {
+//color: $text-color;
+text-decoration: none;
+}
+}
+}
+
+label {
+margin-right: 15px;
+}
+}
+
+#new-note {
+outline: none;
+width: 100%;
+height:115px !important;
+//margin-bottom: 5px;
+font-size: 14px;
+border:1px solid #a2a5a7 !important;
+padding: 5px;
+background-color: transparent;
+color:#fff;
+}
+
+.note-options {
+position: relative;
+top:5px;
+height:30px;
+line-height:30px;
+//color:$video-right-white;
+label{cursor:pointer;}
+input{vertical-align:middle;margin-bottom:2px;}
+}
+
+.tools {
+text-align: right;
+position: relative;
+top:-2px;
+}
+
+.btn-new-note {
+display: inline-block;
+margin-bottom: 5px;
+font-size: 14px;
+color: #fff;
+height: 30px;
+width:75px;
+line-height: 30px;
+text-align: center;
+border-radius: 3px;
+background-color: $btn-green;
+-webkit-transition-property: background-color;
+-webkit-transition-duration: 0.3s;
+-webkit-transition-timing-function: ease;
+
+&:hover {
+text-decoration: none;
+background-color: $btn-green-dark;
+}
+}
+
+}
+.open-adopt-answer:hover{
+color: #58bfaa;
+}
+// 问答
+// TODO 重构
+.data-selections {
+padding-top:20px;
+position: relative;
+
+.data-box{
+overflow: auto;
+position: relative;
+padding: 0 0 0 10px;
+margin: 10px;
+max-width: 95%;
+height:97%;
+-webkit-box-sizing: border-box;
+-moz-box-sizing: border-box;
+box-sizing: border-box;
+}
+.data-title{
+font-size: $content-size;
+margin-bottom:20px;
+}
+.data-desc{
+margin-bottom:35px;
+font-size: 14px;
+color:#bbbfc1;
+}
+.data-list{
+padding-bottom:75px;
+}
+.data-item{
+display:block;
+padding-left:30px;
+margin-bottom:20px;
+background:url(/assets/img/data-download.png) no-repeat left top;
+line-height:20px;
+color:#bbbfc1;
+text-decoration:none;
+&:hover{
+background-position:left bottom;
+color:$text-btn-green;
+}
+&.no-vip{
+cursor: default;
+}
+
+}
+
+
+
+}
+
+
+// 内容 tab
+.inner-tab {
+width: 100%;
+
+li {
+position:relative;
+float: left;
+margin: 0;
+cursor: pointer;
+width: 50%;
+height: 30px;
+font-size: 16px;
+text-align: center;
+//color: $text-color-gray;
+line-height: 2em;
+padding: 15px 0 10px;
+
+&.active {
+display: block;
+//color: $text-color-green-dark;
+//border-bottom: 3px solid $color-green-dark;
+}
+
+.point-red{
+position: absolute;
+width:8px;
+height:8px;
+background:#f00;
+border-radius: 50%;
+left:127px;
+top:20px;
+}
+
+}
+}
+.inner-tab-content {
+
+display: none;
+
+&.active {
+display: block;
+}
+}
+
+// 章节
+.course-structure {
+
+
+// 系列课
+ul.chapter {
+list-style:none;
+margin:0;
+padding:0;
+li.title {
+font-size: 16px;
+//border-left: 3px solid $color-green-dark;
+//padding-left: 5px;
+line-height: 1em;
+margin-bottom: 10px;
+color:#fff;
+}
+margin-bottom: 15px;
+}
+
+ul.section {
+list-style:none;
+margin:0;
+padding:0;
+li {
+font-size: 14px;
+color: #f5f9fa;
+border: none;
+padding-left: 20px;
+margin:10px 0;
+height:33px;
+
+
+&.disabled {
+background: url(/assets/img/icon-bean-none.png) no-repeat left center;
+}
+&.viewed {
+background: url(/assets/img/icon-bean.png) no-repeat left center;
+}
+
+&.completed {
+background: url(/assets/img/icon-bean-green.png) no-repeat left center;
+}
+&.now-section{
+color:$text-green-middle;
+a{color:$text-green-middle;}
+.section-time{color:$text-green-middle;}
+}
+}
+
+a {
+display: inline-block;
+position: relative;
+text-decoration: none;
+height: 33px;
+width:226px;
+line-height: 33px;
+padding-left: 4px;
+padding-right: 10px;
+color: #f5f9fa;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+&:hover,&.now-section {
+//color: $text-green-middle;
+}
+&.disabled{color:#9d9d9d;}
+&.homework-status{
+float:right;
+padding:0;
+margin-right:5px;
+width:56px;
+height:24px;
+border:1px solid #58bfaa;
+border-radius:3px;
+font-size:12px;
+color:#58bfaa;
+line-height:24px;
+text-align:center;
+.complete-homework{display:none;}
+&.disabled{
+border:1px solid #9d9d9d;
+color:#9d9d9d;
+}
+&.on{
+background:#58bfaa;
+color:#fff;
+.complete-homework{display:inline;}
+}
+}
+}
+.section-time{display:inline-block;height:33px;margin-left:7px;overflow:hidden;line-height:33px;color:#9d9d9d;}
+li.current {
+background-color: #313131;
+a {
+color: $text-green-light;
+}
+}
+
+}
+
+.content-box {
+padding: 20px 5px 20px 20px;
+height: calc(100% - 40px);
+overflow: hidden;
+}
+.content-scroll {
+padding: 20px 5px 20px 20px;
+height: calc(100% - 40px);
+overflow: auto;
+}
+
+
+.section-list {
+height: 100%;
+}
+.section-scroll-list {
+overflow: auto;
+position: relative;
+padding: 20px 0 20px 10px;
+margin: 10px;
+max-width: 95%;
+//height: 400px;
+-webkit-box-sizing: border-box;
+-moz-box-sizing: border-box;
+box-sizing: border-box;
+}
+}
+
+.function-box{
+margin:15px 0 0 10px;
+}
+.function-btn{
+display:inline-block;
+margin-left:10px;
+color:$text-btn-gray;
+&:hover{
+color:$text-btn-gray-hover;
+}
+}
+#send_error{
+.error-word-input{
+height:150px;
+}
+.video-time{
+display: inline-block;
+height:36px;
+line-height:36px;
+color:#a2a5a7;
+}
+}
+
+.bottom-section-list,.bottom-list-back,.header-video-height{
+display:none;
+}
+//@media screen and (min-width: 960px) and (max-width: 1199px) {
+//  .video-header{display:none;}
+//  .video-area{
+//    min-width: 320px;
+//  }
+//  .video{
+//    width:100%!important;
+//  }
+//  //右侧栏隐藏
+//  .video-sidebar,.function-box,.function-btn,.next-section{
+//     display:none!important;
+//  }
+//}
+@media screen and (min-width: 768px){
+
+}
+@media screen and (min-width: 768px) and (max-width: 959px){}
+//@media screen and (max-width: 768px){
+@media screen and (max-width: 768px){
+.video-header{display:none;}
+.video-area{
+position:fixed;
+top:60px;
+left:0;
+min-height: 0;
+min-width:0;
+z-index: 200;
+overflow: visible;
+}
+.header-video-height{
+display:block;
+}
+.bottom-list-back{
+display:block;
+position:absolute;
+width:100%;
+height:20px;
+bottom:-20px;
+left:0;
+background:#e8e9ea;
+z-index:200;
+}
+.video{
+width:100%!important;
+}
+#video{
+min-height: 0;
+}
+//右侧栏隐藏
+.video-sidebar,.function-box,.function-btn,.next-section{
+display:none!important;
+}
+.bottom-section-list{
+display:block;
+ul.chapter {
+list-style:none;
+margin:0;
+padding:0;
+li.title {
+font-size: 16px;
+//border-left: 3px solid $color-green-dark;
+//padding-left: 5px;
+line-height: 1em;
+margin-bottom: 10px;
+color:#fff;
+}
+margin-bottom: 15px;
+}
+
+ul.section {
+list-style:none;
+margin:0;
+padding:0 10px;
+li {
+font-size: 14px;
+color: #f5f9fa;
+border: none;
+padding-left: 20px;
+margin:10px 0;
+height:33px;
+
+
+&.disabled {
+background: url(/assets/img/icon-bean-none.png) no-repeat left center;
+}
+&.viewed {
+background: url(/assets/img/icon-bean.png) no-repeat left center;
+}
+
+&.completed {
+background: url(/assets/img/icon-bean-green.png) no-repeat left center;
+}
+&.now-section{
+color:$text-green-middle;
+a{color:$text-green-middle;}
+.section-time{
+color:$text-green-middle;
+}
+}
+}
+
+a {
+display: inline-block;
+position: relative;
+text-decoration: none;
+height: 33px;
+width:226px;
+line-height: 33px;
+padding-left: 4px;
+padding-right: 10px;
+color: #848788;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+&:hover,&.now-section {
+//color: $text-green-middle;
+}
+&.disabled{color:#9d9d9d;}
+&.homework-status{
+float:right;
+padding:0;
+margin-right:5px;
+width:56px;
+height:24px;
+border:1px solid #58bfaa;
+border-radius:3px;
+font-size:12px;
+color:#58bfaa;
+line-height:24px;
+text-align:center;
+.complete-homework{display:none;}
+&.disabled{
+border:1px solid #9d9d9d;
+color:#9d9d9d;
+}
+&.on{
+background:#58bfaa;
+color:#fff;
+.complete-homework{display:inline;}
+}
+}
+}
+.section-time{
+float:right;
+display:inline-block;
+height:33px;
+margin-left:7px;
+overflow:hidden;
+line-height:33px;
+color:#9d9d9d;
+}
+li.current {
+background-color: #313131;
+a {
+color: $text-green-light;
+}
+}
+
+}
+}
+}
+
+
+
+@extends('layouts.learn')
+
+@section('title',  $info->course->name.'-像素种籽')
+
+@section('content')
+<header class="video-header group">
+    <div class="video-title fl-l group">
+        <a class="back" target="_self" href="/course/{{ $info->course->id }}">返回列表</a>
+        <a href="javascript:;" class="prev-section" data-toggle="tooltip" data-placement="right" title="上一节"></a>
+
+        <h1>{{ $info->course->name }} <small class="little-title">{{ $info->title }}</small></h1>
+        <!--<a target="_self" href="javascript:;" class="btn-share"><i class="icon icon-medium icon-share"></i> 分享</a>-->
+    </div>
+
+    <ul class="nav-ul clearfix pull-right">
+        @guest
+        <li>
+            <a class="crown-btn" href="/course/gnomon">
+                <img src="/assets/img/nav-crown.png" alt="">
+            </a>
+            <a href="/login" class="nav-login-btn">登录</a> |
+            <a href="/login#register" class="nav-login-btn">注册</a>
+        </li>
+        @endguest
+
+        @auth
+        <li class="my-study {{ !in_array(Request::path(), ['/', 'course', 'gnomon']) ? 'active' : '' }}"><a href="/user/ongoing">我的学习</a></li>
+        {{--<div class="nav-img-right nav-img-right-car"><span class="icon icon-buy-car"></span></div>--}}{{--购物车--}}
+        <a class="crown-btn" href="/course/gnomon"><span class="icon icon-crown"></span></a>
+        <div class="nav-img-right nav-img-right-center">
+            <a class="user-avatar-a" href="{{ url('user/profile') }}">
+                <?php
+                        $size = config('pixseed.user.size');
+                    ?>
+                <img class="user-avatar" src="{{ $user->_avatar }}" alt="{{ $user->name ?: '用户名' }}" width="{{ $size[2][0] }}" height="{{ $size[2][1] }}" />
+                <span class="red-span"></span>
+            </a>
+            {{--pc下拉--}}
+            <div class="mobile-nav-center">
+                <div class="nav-pc-drop">
+                    <i class="border-box-t border-black-center"><i class="border-box-b border-black-center-in"></i></i>
+                    <div class="drop-center-top">
+                        <span class="drop-center-top-name {{ $status ? 'active' : '' }}">{{ $user->name ?: '用户名' }}</span>
+                        <i class="icon icon-crown-bg {{ $status ? 'active' : '' }}"></i>
+
+                        @if($status)
+                        <a href="/course/gnomon"><span class="btn-vip-keep fl-r btn-vip">立即续费</span></a>
+                        <p>
+                            <span class="class-num">可选课程<span>{{ $status->vip->courses_limit }}</span>&nbsp;&nbsp;&nbsp;已选<span>{{ $status->vip->courses_now }}</span>&nbsp;&nbsp;&nbsp;剩余<span>{{ $status->vip->courses_limit - $status->vip->courses_now }}</span></span>
+                            <span class="fl-r">剩余：<i class="font-style">{{ $status->expired_at->diffInDays() }}</i>天</span>
+                        </p>
+                        @else
+                        <a href="/course/gnomon"><span class="btn-vip-not fl-r btn-vip">开通会员</span></a>
+                        <p>开通会员，观看Gnomon Workshop全部课程</p>
+                        @endif
+                    </div>
+                    <div class="drop-center-bottom">
+                        <a href="/user/vip" target="_blank">
+                            <dl>
+                                <dt><img src="/assets/img/nav-right-1.png" alt=""></dt>
+                                <dd>我的会员</dd></dl>
+                        </a>
+                        <a href="{{ url('user/account') }}" target="_blank">
+                            <dl><dt><img src="/assets/img/nav-right-2.png" alt=""></dt><dd>账号安全</dd></dl>
+                        </a>
+                        <a href="/user/order" target="_blank">
+                            <dl class="dl-last"><dt><img src="/assets/img/nav-right-3.png" alt=""></dt><dd>我的订单</dd></dl>
+                        </a>
+                        <a href="/user/message" target="_blank">
+                            <dl class="dl-last"><dt><img src="/assets/img/nav-right-4.png" alt=""></dt><dd>消息通知</dd><span class="message-num"></span></dl>
+                        </a>
+                    </div>
+
+                    {{--退出--}}
+                    <a class="fl-r logOut-btn" href="javascript:;">
+                        退出
+                    </a>
+
+                </div>
+            </div>
+        </div>
+        @endauth
+    </ul>
+    @if($status && !$joined)
+    <button type="button" class="pix-btn font-14 pix-btn-padd-20 fl-r add-study" data-toggle="tooltip" data-placement="left" title="选为会员课程后，可学习该课程全部内容" data-course-now="{{ $status->vip->courses_limit - $status->vip->courses_now }}" data-can-choose="{{ $isVip1CanChoose }}">选为会员课程</button>
+    @endif
+</header>
+@if($status && !$joined)
+<div id="ok-modal" class="modal fade text-color-gray-05" tabindex="-1" data-backdrop="static" role="dialog">
+    <div class="modal-dialog modal-dialog-small" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">温馨提示</h4>
+            </div>
+            <div class="modal-body">
+                <p class="small-top-p">是否选择该课程为 <span class="text-color-orange">“会员课程”</span>进行学习？</p>
+                <p class="small-p"><span class="text-color-green">选择后不可撤销，</span>当前会员等级剩余<span class="text-color-green">
+                    {{ $status->vip->courses_limit - $status->vip->courses_now }}
+                </span>
+                    门可选
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="pix-btn pix-btn-padd-35 margin-right-25 success-btn" onclick="">
+                    确定
+                </button>
+                <button type="button" data-dismiss="modal" aria-label="Close" class="pix-btn pix-btn-padd-35 pix-btn-white">
+                    取消
+                </button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- 点击选为会员课程按钮，如果是会员，弹出这个框 -->
+
+<div id="not-crow-modal" class="modal fade" tabindex="-1" data-backdrop="static" role="dialog">
+    <div class="modal-dialog modal-dialog-small" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">温馨提示</h4>
+            </div>
+            <div class="modal-body">
+                <p class="crow-modal-p">
+                    <span class="text-color-green">每月更新课程</span>只有 <span class="text-color-orange">VIP2</span>
+                    以上会员才可观看。
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="pix-btn success-btn"
+                        onclick="location.href='/course/gnomon'">会员升级
+                </button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- 如果这是每月更新课程，而用户又是vip1，弹出这个框 -->
+
+<div id="full-modal" class="modal fade" tabindex="-1" data-backdrop="static" role="dialog">
+    <div class="modal-dialog modal-dialog-small" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">温馨提示</h4>
+            </div>
+            <div class="modal-body">
+                <p class="full-modal-p">
+                    您的会员课程<span class="text-color-green">已选满。</span>
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="pix-btn pix-btn-width-10  margin-right-25 success-btn"
+                        onclick="location.href='/course/gnomon'">会员升级
+                </button>
+                <button type="button" data-dismiss="modal" aria-label="Close"
+                        class="pix-btn pix-btn-width-10 pix-btn-white" onclick="location.href='/user/ongoing'">
+                    查看已选课程
+                </button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- 如果会员课程已选满，弹出这个框 -->
+
+@endif
+<!--/.video-header-->
+<section class="video-area group">
+    <div id="video" class="video">
+
+        @if(($status && $joined) && !$info->is_preview)
+        {!! playCode($info->video, 1) !!}
+        @endif
+
+        @if($info->is_preview)
+        {!! playCode($info->video, 1) !!}
+        @endif
+
+        @if(!$status && !$info->is_preview)
+        <div class="buy-vip-modal buy-vip-modal-top">
+            <div class="buy-vip-box">
+                <h4 class="buy-vip-title">开通会员，观看该课程全部内容</h4>
+
+                <a href="/course/gnomon" target="_self" class="learn-buy-vip-btn"></a>
+                <div class="gnomon-content-info-box clearfix">
+                    <p class="gnomon-content-title">会员特权：</p>
+                    <aside class="gnomon-content-item pull-left">
+                        <p class="gnomon-icon"><img src="/assets/img/gnomon-icon-01.png" alt=""></p>
+                        280+<br>
+                        顶级课程
+                    </aside>
+                    <aside class="gnomon-content-item pull-left">
+                        <p class="gnomon-icon"><img src="/assets/img/gnomon-icon-02.png" alt=""></p>
+                        高质量<br>
+                        素材、资产下载
+                    </aside>
+                    <aside class="gnomon-content-item pull-left">
+                        <p class="gnomon-icon"><img src="/assets/img/gnomon-icon-03.png" alt=""></p>
+                        国内独家<br>
+                        中文字幕
+                    </aside>
+                    <aside class="gnomon-content-item pull-left">
+                        <p class="gnomon-icon"><img src="/assets/img/gnomon-icon-04.png" alt=""></p>
+                        Gnomon官网课程<br>
+                        同步更新
+                    </aside>
+                    <aside class="gnomon-content-item pull-left">
+                        <p class="gnomon-icon"><img src="/assets/img/gnomon-icon-05.png" alt=""></p>
+                        续费优惠
+                    </aside>
+                </div>
+            </div>
+        </div>
+        @elseif($status && !$info->is_preview && !$joined)
+        <div class="select-vip-modal">
+            <div class="buy-vip-box">
+                <h2 class="buy-vip-title">选为“会员课程”后可继续学习</h2>
+                <p class="select-course-name">《{{ $info->course->name }}》</p>
+                <div class="select-vip-btn-box">
+                    <a href="javascript:;" target="_self" class="pix-btn pix-btn-padd-20 select-vip-btn" data-course-now="{{ $status->vip->courses_limit - $status->vip->courses_now }}" data-can-choose="{{ $isVip1CanChoose }}">选为会员课程</a>
+                    <a href="/course" target="_self" class="pix-btn pix-btn-white pix-btn-padd-20">浏览其他课程</a>
+                </div>
+                <a href="/course/gnomon" target="_blank" class="select-vip-btn"></a>
+            </div>
+        </div>
+        <div class="video-back-black"></div>
+
+        @endif
+
+    </div>
+
+    <aside class="video-sidebar">
+
+        <ul class="study-tool-tab on">
+            <li class="active"><img src="/assets/img/section-list-title.png" alt=""><span class="bar-span">章节</span></li>
+            <li><img src="/assets/img/note-list-title.png" alt=""><span class="bar-span">笔记</span></li>
+            <li><img src="/assets/img/data-list-title.png" alt=""><span class="bar-span">素材</span></li>
+            <li class="switcher"></li>
+        </ul>
+        <div class="course-structure study-tool-content active">
+            <div class="section-scroll-list content mCustomScrollbar" style="position:relative;height:100%;">
+                <div class="section-box">
+                    <div class="section-list scrollbar-outer">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="note-selections study-tool-content ">
+
+            <div class="write-note">
+                <!--<div class="more"><a target="_self" href="javascript:;">查看更多</a></div>-->
+                <textarea name="new-note" id="new-note" class="scrollbar-outer" rows="4" placeholder="输入笔记内容"></textarea>
+                <div class="note-options group">
+                    {{--<input type="checkbox" name="ckb-screenshot" id="ckb-screenshot"><label for="ckb-screenshot">截图</label>--}}
+                    {{--<input type="checkbox" name="ckb-public" id="ckb-public" checked="true"><label for="ckb-public">公开</label>--}}
+                    <span class="note-time"></span>
+                    <a target="_self" href="javascript:;" class="btn-new-note fl-r">记笔记</a>
+                </div>
+            </div>
+            <div class="note-list content mCustomScrollbar">
+                <!--精选笔记-->
+                <div class="note-item-box">
+
+                </div>
+
+            </div>
+            <!--/.write-note-->
+
+        </div>
+        <!--/.note-selections-->
+
+        <div class="data-selections study-tool-content">
+            <div class="data-box content">
+
+
+                @if(!$info->course->attachments->isEmpty())
+                <h4 class="data-title">素材说明</h4>
+                <div class="data-desc">
+                    课程素材只有购买会员并选择该课程学习后才可下载。
+                </div>
+                <h4 class="data-title">素材列表</h4>
+                <div class="data-list">
+                    @foreach($info->course->attachments as $item)
+                    @if($status && $joined)
+                    <a href="{{ config('pixseed.file-host').$item->path }}" target="_blank" class="data-item">{{ $item->name }}.{{ $item->ext }} ({{ formatBytes($item->size) }})</a>
+                    @else
+                    <a href="javascript:;" target="_self" class="data-item no-vip" data-toggle="tooltip" data-placement="bottom" title="购买会员并选择课程后才可下载">{{ $item->name }}.{{ $item->ext }} ({{ formatBytes($item->size) }})</a>
+                    @endif
+                    @endforeach
+                </div>
+                @else
+                <div class="no-course no-course-dark no-data-list" style="display:block;">本课程无素材</div>
+                @endif
+            </div>
+            <!--/.qa-list-->
+        </div>
+        <!--/.qa-selections-->
+
+    </aside>
+
+    <div class="function-box">
+        <a target="_blank" href="https://chat32.live800.com/live800/chatClient/chatbox.jsp?companyID=743836&configID=105078&jid=1445741415&s=1&returnbt=1" class="function-btn">在线客服</a>
+        <a href="javascript:;" class="function-btn" data-toggle="modal" data-target="#send_error">字幕纠错</a>
+    </div>
+    <a href="javascript:;" class="next-section"   data-toggle="tooltip" data-placement="right" title="下一节"></a>
+    <div class="bottom-list-back"></div>
+</section>
+<div id="send_error" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">字幕纠错</h4>
+            </div>
+            <div class="modal-body">
+                <textarea name="" id="" class="form-control error-word-input" placeholder="请输入具体问题，如：3分15秒翻译错误，应该为......."></textarea>
+            </div>
+            <div class="modal-footer ">
+                <div class="row">
+                    <div class="col-md-6 text-left">
+                        <span class="video-time">10:20</span>
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <button type="button" class="pix-btn pix-btn-padd-20 submit-error-word">提交</button>
+                    </div>
+                </div>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+    {{ csrf_field() }}
+</form>
+<script type="text/template" id="section-list">
+    <% if (data.courseType === 0) { %>
+    <ul class="chapter">
+        <li class="title"></li>
+        <li>
+            <ul class="section">
+                <% var oSectionItem = data.data %>
+                <% for (var j in oSectionItem) { %>
+                <% var aClass = '' %>
+                <% var nowSection = '' %>
+
+                <% if(oSectionItem[j].id == data.sid){ %>
+                <% nowSection = 'now-section' %>
+                <% } %>
+                <% if(data.isVip){ %>
+                <% if (!oSectionItem[j].learn) { %>
+                <% aClass = 'disabled'; %>
+                <% } else if (parseInt(oSectionItem[j].learn.is_complete) === 0) { %>
+                <% aClass = 'viewed'; %>
+                <% } else if (parseInt(oSectionItem[j].learn.is_complete) === 1) { %>
+                <% aClass = 'completed'; %>
+                <% } %>
+                <% } %>
+                <li class=" <%- aClass %> <%- nowSection %>"  title=" <%- oSectionItem[j].title %>">
+                    {{--<li class=""  title="<%- oSectionItem[j].title %>">--}}
+                <a class="<%- nowSection %>" target="_self" href="/learn/<%- oSectionItem[j].id %>" title="<%- oSectionItem[j].title %>">
+                    <%- oSectionItem[j].title %>
+                </a>
+                <span class="section-time"> <%- data.timeStyleNum(oSectionItem[j].duration) %></span>
+            </li>
+                <% } %>
+            </ul>
+        </li>
+    </ul>
+    <% }else{ %>
+    <% for (var i in data.data) { %>
+    <ul class="chapter">
+        <li class="title">
+            <%- data.data[i].title %>
+        </li>
+        <li>
+            <ul class="section">
+                <% var oSectionItem = data.data[i].sections %>
+                <% for ( var j = 0; j < oSectionItem.length; j++ ) { %>
+                <% var aClass = '' %>
+                <% var nowSection = '' %>
+
+                <% if( oSectionItem[j].id == sid ){ %>
+                <% nowSection = 'now-section' %>
+                <% } %>
+
+                <% if(data.isVip){ %>
+                <% if (!oSectionItem[j].learn) { %>
+                <% aClass = 'disabled'; %>
+                <% } else if (parseInt(oSectionItem[j].learn.is_complete) === 0) { %>
+                <% aClass = 'viewed'; %>
+                <% } else if (parseInt(oSectionItem[j].learn.is_complete) === 1) { %>
+                <% aClass = 'completed'; %>
+                <% } %>
+                <% } %>
+                <li class="<%- aClass %> <%- nowSection %>"  title="<%- oSectionItem[j].title %>">
+                    <a class="" target="_self" href="/learn/<%- oSectionItem[j].id %> " title="<%- oSectionItem[j].title  %>">
+                        <%- oSectionItem[j].title %>
+                    </a>
+                                <span class="section-time">
+                                    <%- data.timeStyleNum( oSectionItem[j].duration ) %>
+                                </span>
+                </li>
+                <% } %>
+            </ul>
+        </li>
+    </ul>
+    <% } %>
+    <% } %>
+
+</script>
+{{--if (oSectionItem[j].read === false && shid!=='') {--}}
+{{--aClass = '';--}}
+{{--} else if (parseInt(oSectionItem[j].read) === 0) {--}}
+{{--aClass = 'viewed';--}}
+{{--} else if (parseInt(oSectionItem[j].read) === 1) {--}}
+{{--aClass = 'completed';--}}
+{{--}--}}
+
+<script type="text/template" id="right-note-list">
+    <% var data = note.data %>
+    <% for(var i=0 ; i< data.length ; i++){ %>
+    <% if(data[i].content.length>35){ %>
+    <div class="note right-note-bottom border-bottom bg-none group">
+        <%- data[i].content.substr(0,35) %>
+        <span class="hidetext">...</span>
+        <span class="moretext"><%- data[i].content.substr(35) %></span>
+        <a href="javascript:;" class="seemore">查看更多</a><a href="javascript:;" class="hidemore">收起</a>
+        <div class="group"><div class="note-time-title fl-r"><%- note.timeStyle(data[i].time_point) %> </div>
+            <div class="note-section-title"><%-  data[i].section.title %> </div>
+        </div>
+    </div>
+
+    <% }else{ %>
+    <div class="note right-note-bottom border-bottom bg-none">
+        <%- data[i].content %>
+        <div class="group"><span class="note-time-title fl-r"><%- note.timeStyle(data[i].time_point) %></span>
+            <span class="note-section-title"><%- data[i].section.title %></span>
+        </div>
+    </div>
+    <% } %>
+    <% } %>
+</script>
+
+<section class="header-video-height">&nbsp;</section>
+<section class="bottom-section-list">
+
+</section>
+@endsection()
+
+@push('scripts')
+<script>
+    var cid = '{{ $info->course->id }}'
+            , sid = '{{ $info->id }}'
+            , uname = '{{ $user->name }}'
+            , isVip = '{{ $status && $joined ? 1 : "" }}'
+            ;
+</script>
+<script src="/assets/js/components/learn.js"></script>
+@endpush

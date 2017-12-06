@@ -2,9 +2,10 @@
  * Created by ChenJian on 2017/11/28.
  */
 var mongodb = require('./db');
-var Post = function(name,title,post){
+var Post = function(name,title,tags,post){
     this.name = name;
     this.title = title;
+    this.tags = tags;
     this.post = post;
 };
 
@@ -25,7 +26,9 @@ Post.prototype.save = function(callback){
         time  : time,
         title : this.title,
         post  : this.post,
-        comments : []
+        tags : this.tags,
+        comments : [],
+        pv:0
     };
     //打开数据库
     mongodb.open(function(err,db){
@@ -95,9 +98,25 @@ Post.getOne = function(name,day,title,callback){
                 'time.day' : day,
                 title : title
             },function(err,doc){
-                mongodb.close();
+
                 if(err){
+                    mongodb.close();
                     callback(err);
+                }
+                if(doc){
+                    collection.update({
+                        name : name ,
+                        'time.day' : day ,
+                        title : title
+                    },{
+                        $inc : {'pv':1}
+                    },function(err){
+                        mongodb.close();
+                        if(err){
+                            return callback(err);
+                        }
+
+                    })
                 }
                 callback(null,doc);
             })
@@ -186,6 +205,91 @@ Post.remove = function(name,day,title,callback){
         })
     })
 };
+
+Post.getArchive = function(callback){
+    //打开数据库
+    mongodb.open(function(err,db){
+       if(err){
+           return callback(err);
+       }
+        db.collection('posts',function(err,collection){
+            if(err){
+                mongodb.close();
+                return callback(err);
+            }
+            collection.find({},{
+                name : 1,
+                time : 1,
+                title : 1
+            }).sort({
+                time : -1
+            }).toArray(function(err,docs){
+                console.log(docs)
+                mongodb.close();
+                if(err){
+                    return callback(err);
+                }
+                callback(null,docs);
+            })
+        });
+    });
+};
+
+Post.getTags = function(callback){
+    //打开数据库
+    mongodb.open(function(err,db){
+        if(err){
+            return callback(err);
+        }
+        db.collection('posts',function(err,collection){
+            if(err){
+                mongodb.close();
+                return callback(err);
+            }
+           //distinct 用来找出给定键的所有不同值
+            collection.distinct('tags',function(err,docs){
+                mongodb.close();
+                if(err){
+                    return callback(err);
+                }
+                callback(null,docs);
+            })
+        });
+    });
+};
+
+Post.getTag = function(tag,callback){
+  //打开数据库
+    console.log(tag)
+    console.log(callback)
+    //return;
+    mongodb.open(function(err,db){
+        if(err){
+            return callback(err);
+        }
+        db.collection('posts',function(err,collection){
+            if(err){
+                mongodb.close();
+                return callback(err);
+            }
+            console.log(11111111111111)
+            collection.find({
+                'tags' : tag
+            },{
+                name : 1,
+                time : 1,
+                title : 1
+            }).sort({time:-1}).toArray(function(err,docs){
+                mongodb.close();
+                if(err){
+                    return callback(err);
+                }
+                callback(null,docs);
+            });
+        })
+    })
+};
+
 
 
 

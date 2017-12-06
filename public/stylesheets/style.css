@@ -13,5 +13,14 @@
     width:900px;
 }
 .mar-right-10{
-    margin-right:0px;
+    margin-right:10px;
+}
+.mar-right-20{
+    margin-right:20px;
+}
+.mar-left-10{
+    margin-left:10px;
+}
+.mar-left-20{
+    margin-left:20px;
 }
