@@ -1,19 +1,46 @@
 <%- include header %>
 <div>
     <% if(user&&(user.name==post.name)){ %>
-        <a class="mar-right-10" target="_self" href="/edit/<%- post.name%>/<%- post.time.day%>/<%- post.title%>">编辑</a>
+    <a class="mar-right-10" target="_self" href="/edit/<%- post.name%>/<%- post.time.day%>/<%- post.title%>">编辑</a>
+    <a target="_self" href="/remove/<%- post.name%>/<%- post.time.day%>/<%- post.title%>">删除</a>
+    <% } %>
+    <% var flag = 1 %>
+    <% if(user&&(user.name !== post.name)){ %>
+        <% if((post.reprint_info.reprint_from!==undefined)&&(post.reprint_info.reprint_from===user.name)){ %>
+        <% flag = 0 %>
+        <% } %>
+        <% if(post.reprint_info.reprint_to!==undefined){ %>
+            <% post.reprint_info.reprint_to.forEach(function(reprint_to,index){ %>
+                <% if(user.name===reprint_to.name){ %>
+                <% flag=0; %>
+                <% } %>
+            <% }) %>
+        <% } %>
     <% }else{ %>
-        <a target="_self" href="/remove/<%- post.name%>/<%- post.time.day%>/<%- post.title%>">删除</a>
+    <% flag = 0 %>
+    <% } %>
+    <% if(flag){ %>
+    <a class="btn btn-success btn-sm" href="/reprint/<%- post.name %>/<%- post.time.day %>/<%- post.title %>">转载</a>
     <% } %>
 
 </div>
 <p>
     作者:<%- post.name %> 日期:<%- post.time.minute %> | 标签:
     <% post.tags.forEach(function(tag,index){ %>
-        <% if(tag){ %>
-            <a href="/tag/<%- tag %>"><%- tag %></a>
-        <% } %>
+    <% if(tag){ %>
+    <a href="/tag/<%- tag %>"><%- tag %></a>
+    <% } %>
     <% }) %>
+    |转载:
+    <%if(post.reprint_info.reprint_to){%>
+    <%- post.reprint_info.reprint_to.length %>
+    <%}else{%>
+    0
+    <%}%>
+    <%if(post.reprint_info.reprint_from){%>
+    |
+    <a href="/u/<%- post.reprint_info.reprint_from.name%>/<%- post.reprint_info.reprint_from.day%>/<%- post.reprint_info.reprint_from.title%>">原文链接</a>
+    <%}%>
 </p>
 <div>
     <%- post.post %>

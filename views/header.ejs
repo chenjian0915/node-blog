@@ -12,8 +12,14 @@
     <h1 class="h1-title">
         <%- title %>
     </h1>
+    <div class="search-box">
+        <form action="/search" method="get" class="form-inline">
+            <input type="text" name="keyword" placeholder="SEARCH" class="form-control" />
+        </form>
+    </div>
 </header>
 <div class="container">
+
     <nav class="pull-left nav-list">
         <a href="/" target="_self" class="btn btn-primary">home</a>
         <a href="/archive" target="_self" class="btn btn-default">archive</a>

@@ -1,6 +1,10 @@
 <br>
 <% post.comments.forEach(function(comment,index){ %>
     <p>
+        <img src="<%- comment.head %>" alt="">
+        <a href="<%-comment.website %>"><%- comment.name %></a>
+    </p>
+    <p>
         <a href="<%- comment.website %><%- comment.name %>"></a>
         <span class="info">回复于 <%- comment.time %></span>
     </p>
@@ -25,15 +29,15 @@
         <%}else{%>
             <div class="form-group">
                 <label for="exampleInputPassword1">姓名</label>
-                <input type="text" class="form-control" name="name" placeholder="" disabled="disabled">
+                <input type="text" class="form-control" name="name" placeholder="">
             </div>
             <div class="form-group">
                 <label for="exampleInputPassword1">邮箱</label>
-                <input type="text" class="form-control" name="email" placeholder="" disabled="disabled">
+                <input type="text" class="form-control" name="email" placeholder="">
             </div>
             <div class="form-group">
                 <label for="exampleInputPassword1">网址</label>
-                <input type="text" class="form-control" name="website" value="/" placeholder="" disabled="disabled">
+                <input type="text" class="form-control" name="website" value="/" placeholder="">
             </div>
         <%}%>
 

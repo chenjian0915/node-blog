@@ -2,8 +2,9 @@
  * Created by ChenJian on 2017/11/28.
  */
 var mongodb = require('./db');
-var Post = function(name,title,tags,post){
+var Post = function(name,head,title,tags,post){
     this.name = name;
+    this.head = head;
     this.title = title;
     this.tags = tags;
     this.post = post;
@@ -23,11 +24,13 @@ Post.prototype.save = function(callback){
     };
     var post = {
         name  : this.name,
+        head : this.head,
         time  : time,
         title : this.title,
         post  : this.post,
         tags : this.tags,
         comments : [],
+        reprint_info : {},
         pv:0
     };
     //打开数据库
@@ -189,19 +192,61 @@ Post.remove = function(name,day,title,callback){
                 mongodb.close();
                 return callback(err)
             }
-            collection.remove({
-                'name':name,
-                'time.day':day,
-                'title':title
-            },{
-                w : 1
-            }, function (err) {
-                mongodb.close();
-                if(err){
-                    return callback(err);
+            //查询要删除的文档
+            collection.findOne({
+                name : name ,
+                'time.day' : day,
+                title : title
+            },function(err,doc){
+
+               if(err){
+                   mongodb.close();
+                   return callback(err);
+               }
+                var reprint_from = '';
+                if(doc.reprint_info.reprint_from){
+                    reprint_from = doc.reprint_info.reprint_from;
                 }
-                callback(null);
-            })
+                if(reprint_from!==''){
+                    collection.update({
+                        name : reprint_from.name,
+                        'time.day' : reprint_from.day,
+                        title : reprint_from.title
+                    },{
+                        $pull : {
+                            'reprint_info.reprint_to' : {
+                                name : name ,
+                                day : day ,
+                                title : title
+                            }
+                        }
+                    }, function (err) {
+                        if(err){
+                            mongodb.close();
+                            return callback(err);
+                        }
+
+                    })
+                }
+
+                collection.remove({
+                    'name':name,
+                    'time.day':day,
+                    'title':title
+                },{
+                    w : 1
+                }, function (err) {
+                    console.log(123123)
+                    console.log(err)
+                    console.log(123123)
+                    mongodb.close();
+                    if(err){
+                        return callback(err);
+                    }
+                    callback(null);
+                })
+            });
+
         })
     })
 };
@@ -272,7 +317,6 @@ Post.getTag = function(tag,callback){
                 mongodb.close();
                 return callback(err);
             }
-            console.log(11111111111111)
             collection.find({
                 'tags' : tag
             },{
@@ -290,7 +334,107 @@ Post.getTag = function(tag,callback){
     })
 };
 
+Post.search = function(keyword,callback){
+  mongodb.open(function(err,db){
+    if(err){
+     return callback(err);
+    }
+      db.collection('posts',function(err,collection){
+          if(err){
+              mongodb.close();
+              return callback(err);
+          }
+          var pattern = new RegExp('^.*' + keyword + '.*$',"i");
+          collection.find({
+              title : pattern
+          },{
+              name : 1,
+              time : 1,
+              title : 1
+          }).sort({
+              time : -1
+          }).toArray(function(err,docs){
+              mongodb.close();
+              if(err){
+                  return callback(err);
+              }
+              callback(null,docs);
+          })
+      });
 
+  });
+};
+
+Post.reprint = function(reprint_from,reprint_to,callback){
+    mongodb.open(function(err,db){
+        if(err){
+            return callback(err);
+        }
+        db.collection('posts',function(err,collection){
+            if(err){
+                mongodb.close();
+                return callback(err);
+            }
+            collection.findOne({
+                name : reprint_from.name,
+                'time.day' : reprint_from.day,
+                title : reprint_from.title
+            },function(err,doc){
+                if(err){
+                    mongodb.close();
+                    return callback(err);
+                }
+                var date = new Date();
+                var time = {
+                    date   : date,
+                    year   : date.getFullYear(),
+                    month  : date.getFullYear() + '-' + (date.getMonth()+1),
+                    day    : date.getFullYear() + '-' + (date.getMonth()+1) + '-' + date.getDate(),
+                    minute : date.getFullYear() + '-' + (date.getMonth()+1) + '-' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes()
+                };
+                delete doc._id;
+
+                doc.name = reprint_to.name;
+                doc.head = reprint_to.head;
+                doc.time = time;
+                doc.title = (doc.title.search(/[转载]/)>-1) ? doc.title : '[转载]' + doc.title;
+                doc.comments = [];
+                doc.reprint_info = {"reprint_from" : reprint_from};
+                doc.pv = 0;
+
+                collection.update({
+                    name : reprint_from.name,
+                    'time.day' : time.day,
+                    title : reprint_from.title
+                },{
+                    $push : {
+                        'reprint_info.reprint_to' : {
+                            name : doc.name,
+                            'day' : time.day,
+                            title : doc.title
+                        }
+                    }
+                },function(err){
+                    if(err){
+                        mongodb.close();
+                        return callback(err);
+                    }
+                });
+                collection.insert(doc,{
+                    safe : true
+                },function(err,post){
+                    console.log(post)
+                    mongodb.close();
+                    if(err){
+                        return callback(err);
+                    }
+                    callback(err,post.ops[0]);
+                })
+
+            })
+        })
+    })
+};
 
 
 
